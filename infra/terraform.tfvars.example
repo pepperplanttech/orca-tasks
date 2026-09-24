@@ -1,0 +1,29 @@
+project_id           = "your-project-id"
+region               = "us-east4"
+deployer_email       = "you@example.com"
+workspace_user_email = "you@example.com"
+tasklist_title       = "Agent Tasks"
+
+# The folder's ID is the last path segment of its Drive URL. Leave "" for none.
+brand_assets_folder_id = "YOUR_DRIVE_FOLDER_ID"
+
+schedule  = "*/30 * * * *"
+time_zone = "America/New_York"
+
+# 24h. Covers human review latency, not run time -- see variables.tf.
+reaper_timeout_seconds = 86400
+
+# deploy.sh writes this file for you, including tokens read without echo.
+# Tokens are secrets: this file is gitignored, keep it that way.
+routines = {
+  "Klaviyo Campaign" = {
+    trigger_id = "trig_YOUR_TRIGGER_ID"
+  }
+}
+
+routine_tokens = {
+  "Klaviyo Campaign" = "sk-ant-oat01-..."
+}
+
+# Written by deploy.sh after it builds and pushes.
+image = "REGION-docker.pkg.dev/PROJECT_ID/orca/orchestrator:TAG"

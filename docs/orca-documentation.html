@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orca — Task Execution Agent</title>
+<style>
+  @page { size: Letter; margin: 20mm 18mm; }
+  @page { @bottom-right { content: counter(page); } }
+  @page :first { @bottom-right { content: ""; } }
+
+  :root {
+    --ink: #1c1c1c;
+    --muted: #5a5a5a;
+    --rule: #d8d8d4;
+    --accent: #038a00;
+    --tint: #eef5ee;
+    --code-bg: #f6f6f4;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: "Charter", "Georgia", serif;
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .cover {
+    page-break-after: always;
+    padding-top: 58mm;
+  }
+  .cover .eyebrow {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    font-size: 8.5pt;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .cover h1 { font-size: 34pt; letter-spacing: -.02em; margin: 6mm 0 3mm; }
+  .cover .sub { font-size: 13pt; color: var(--muted); font-style: italic; }
+  .cover .meta {
+    margin-top: 60mm;
+    border-top: 2px solid var(--accent);
+    padding-top: 4mm;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 9pt;
+    color: var(--muted);
+  }
+  .cover .meta strong { color: var(--ink); }
+
+  h2 {
+    font-size: 17pt;
+    margin: 11mm 0 4mm;
+    padding-bottom: 2mm;
+    border-bottom: 2px solid var(--accent);
+    page-break-after: avoid;
+  }
+  h2:first-of-type { margin-top: 0; }
+  h3 {
+    font-size: 12pt;
+    margin: 7mm 0 2.5mm;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 10pt;
+    margin: 5mm 0 1.5mm;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 3mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.4mm; }
+
+  code, pre, .mono {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 8.6pt;
+  }
+  code { background: var(--code-bg); padding: 0.4mm 1mm; border-radius: 2px; }
+  pre {
+    background: var(--code-bg);
+    border-left: 2.5px solid var(--accent);
+    padding: 3mm 4mm;
+    margin: 0 0 4mm;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 4mm;
+    font-size: 9.3pt;
+    page-break-inside: avoid;
+  }
+  th {
+    text-align: left;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 8.2pt;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    border-bottom: 1.5px solid var(--ink);
+    padding: 1.5mm 2mm 1.5mm 0;
+  }
+  td {
+    border-bottom: 1px solid var(--rule);
+    padding: 1.8mm 2mm 1.8mm 0;
+    vertical-align: top;
+  }
+  td:first-child { padding-left: 0; }
+  table.fixed { table-layout: fixed; }
+  .w30 { width: 30%; } .w22 { width: 22%; } .w18 { width: 18%; }
+
+  .note {
+    background: var(--tint);
+    border-left: 2.5px solid var(--accent);
+    padding: 3mm 4mm;
+    margin: 0 0 4mm;
+    page-break-inside: avoid;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note .label {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 1.5mm;
+  }
+
+  pre.flow {
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 8.4pt;
+    line-height: 1.45;
+    background: var(--code-bg);
+    border-left: none;
+    white-space: pre;
+    padding: 5mm 4mm;
+    margin: 0 0 4mm;
+    page-break-inside: avoid;
+  }
+
+  .lede {
+    font-size: 11.5pt;
+    line-height: 1.5;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 5mm;
+  }
+
+  .cover { position: relative; }
+  .brandmark {
+    position: absolute;
+    top: 0; left: 0;
+    width: 46mm;
+    height: auto;
+  }
+  .orca-art {
+    position: absolute;
+    top: 30mm; right: -8mm;
+    height: 118mm;
+    opacity: 0.10;
+    z-index: 0;
+  }
+  .cover .eyebrow, .cover h1, .cover .sub, .cover .meta { position: relative; z-index: 1; }
+  .break { page-break-before: always; }
+  strong { font-weight: 700; }
+  .tight li { margin-bottom: 0.8mm; }
+  .tight { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <img class="brandmark" src="assets/pepperplantventures-logo-sm-quick.png" alt="Pepper Plant Ventures">
+  <svg class="orca-art" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" viewBox="113.1 117.0 368.4 495.8"><g transform="translate(-186.12506,-74.349994)"><g transform="translate(-510.50234,-19.993564)"><g id="g4258">
+        <path style="fill:#f9f9f9;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 858.35715,482.71931 c 6.05302,-27.23856 11.76662,-55.52524 20.71429,-82.5 l 0.35714,-1.78571 c 3.66845,-14.67382 1.21675,-28.06897 -9.28571,-38.57143 -4.15417,-4.15416 -6.44151,-5.01293 -10.35715,-8.92857 -6.15557,-6.15558 -17.85804,-13.57188 -27.85714,-20.35714 -4.24756,-2.88234 -12.00184,-2.71613 -15.71429,-6.42857 -6.38281,-7.90208 25.98623,-11.9682 30.71429,-11.78572 9.50393,0 54.31117,8.95403 62.14286,13.21429 22.36463,4.37928 54.80833,1.53625 71.07142,-7.85714 l 35.71434,-22.85715 c 12.2131,-9.00103 12.2934,-10.58765 23.5714,-20.71429 7.8762,-7.07215 13.7243,-17.9591 23.2143,-24.28571 38.815,-31.35808 63.5857,-35.14169 97.8571,-31.07143 4.6952,1.50526 8.6104,2.08395 8.5296,4.32046 -0.2049,5.67546 -2.8984,6.32162 0.4146,7.4606 3.035,1.04341 2.6247,8.66437 1.7701,10.3618 l -1.0715,1.07142 c -9.4036,25.48706 -29.3772,45.54634 -39.6428,73.92858 l -5,11.42857 c -9.2163,20.98751 -21.0026,39.52666 -33.2143,58.21429 l -37.5,35.71428 c -26.646,26.64594 -19.668,19.30091 -50,42.14286 L 1003,464.14789 c -39.17141,27.65166 -69.42285,39.67901 -83.9286,91.07143 l -3.92856,15.35714 c -2.17169,20.27165 -1.97546,33.43629 1.78571,53.57143 4.65414,8.67875 13.14339,11.63321 23.51168,13.64545 13.29781,1.45259 30.72546,0.15196 38.95837,4.98115 9.35211,7.93761 11.65998,15.09253 12.52995,22.08768 -6.62097,-0.32964 -18.49921,2.34391 -21.78571,4.64286 -11.97808,8.37884 -35.74323,16.3308 -47.85715,7.14286 l -2.14282,-0.71429 c -12.37687,19.40928 -49.46189,12.17061 -65.71429,25.71429 l -1.78571,-1.07143 c -19.1189,-31.69137 28.8834,-42.26051 38.21428,-67.14286 0.89825,-5.83333 -0.54193,-8.09524 -3.21428,-12.14286 -11.50066,-25.17626 -23.23119,-41.37229 -29.64286,-67.85714 l -0.35714,-1.78571 c -5.49474,-16.64162 -3.96305,-48.13287 0.71428,-68.92858 z" id="path2832" ns1:nodetypes="cccccscccccsccssccccccccccccccsccccccccc" />
+        <path ns1:nodetypes="cccccscccccccccccccscccccsccscccccsccsssccssccsccsssssssccsscc" id="path2840" d="m 915.14284,570.57646 c -2.17169,20.27165 -1.97546,33.43629 1.78571,53.57143 4.65414,8.67875 13.14339,11.63321 23.51165,13.64545 13.2978,1.45259 30.7255,0.15196 38.9584,4.98115 9.3521,7.93761 11.66,15.09253 12.5299,22.08768 -6.6209,-0.32964 -18.4992,2.34391 -21.7857,4.64286 -11.978,8.37884 -35.7432,16.3308 -47.85711,7.14286 l -2.14282,-0.71429 c -12.37687,19.40928 -49.46189,12.17061 -65.71429,25.71429 l -1.78571,-1.07143 c -19.1189,-31.69137 28.8834,-42.26051 38.21428,-67.14286 0.89825,-5.83333 -0.54193,-8.09524 -3.21428,-12.14286 -11.50066,-25.17626 -23.23119,-41.37229 -29.64286,-67.85714 l -0.35714,-1.78571 c -5.49474,-16.64162 -3.96305,-48.13287 0.71428,-68.92858 6.05302,-27.23856 11.76662,-55.52524 20.71429,-82.5 l 0.35714,-1.78571 c 3.66845,-14.67382 1.21675,-28.06897 -9.28571,-38.57143 -4.15417,-4.15416 -6.44151,-5.01293 -10.35715,-8.92857 -6.15557,-6.15558 -17.85804,-13.57188 -27.85714,-20.35714 -4.24756,-2.88234 -12.00184,-2.71613 -15.71429,-6.42857 -6.38281,-7.90208 25.98623,-11.9682 30.71429,-11.78572 9.50393,0 54.31117,8.95403 62.14286,13.21429 22.36463,4.37928 54.80836,1.53625 71.07146,-7.85714 l 35.7143,-22.85715 c 12.2131,-9.00103 12.2934,-10.58765 23.5714,-20.71429 7.8762,-7.07215 13.7243,-17.9591 23.2143,-24.28571 38.815,-31.35808 63.5857,-35.14169 97.8571,-31.07143 4.6952,1.50526 8.6104,2.08395 8.5296,4.32046 -0.2049,5.67546 -2.8984,6.32162 0.4146,7.4606 -4.7338,-0.38276 -10.4776,-0.23305 -15.2113,1.33169 -21.7657,5.16066 -30.1132,20.88324 -44.4206,30.49572 l -0.7577,-5.3033 c -8.3857,7.77027 -18.6356,14.04919 -23.9911,24.24366 -7.3855,8.15692 -5.8897,21.84696 -5.2751,30.04481 0.6617,8.82524 -7.9984,16.71795 -2.301,31.5745 l 5.0507,8.83884 c 3.5688,10.17519 7.2486,28.49617 7.6076,47.98164 0.1253,6.80445 0.6508,10.81674 -0.789,15.91049 -6.1679,21.81978 -38.8001,4.85674 -45.7094,-8.83882 -8.1227,-16.10052 4.3997,-49.41883 7.8286,-63.13454 l 3.0305,-11.86929 c -3.0931,5.26413 -5.3417,13.00569 -7.0711,18.68782 -2.1953,7.21317 -6.8842,18.57706 -8.0812,25.75889 -1.7982,10.78904 -3.1146,20.55663 -7.0711,29.54696 -7.9522,31.87662 -42.7228,40.65374 -60.3565,47.22463 -10.8151,3.88918 -22.1414,3.64928 -33.5876,3.78808 -7.53127,0.0913 -26.86707,-1.04405 -33.33504,3.53553 -3.70389,1.23953 -7.40778,4.08104 -11.11168,7.3236 -8.45457,7.5277 -10.89196,21.9177 -10.76311,33.848 0.17782,16.46415 4.04909,24.01033 9.50042,19.18501 0.65862,-0.58299 5.05077,-7.9375 5.05077,-8.83883 0,-1.54166 7.98029,-18.08182 9.59644,-19.69797 2.55386,-2.55386 6.60599,-7.75716 9.84899,-10.10153 8.78921,-6.35375 22.56791,-12.00532 23.99111,3.03046 0.3775,3.98809 -2.5159,9.1514 -4.5457,12.62691 -6.5293,11.18006 -13.53023,21.16485 -17.67764,28.03173 -3.06937,4.90148 -4.81641,10.59666 -6.566,15.65736 -2.6099,8.75537 -4.28254,13.85777 -4.79821,22.98097 -0.43015,7.61004 1.5945,17.09332 1.76776,16.92006 4.51049,-4.51049 5.04782,-19.49242 8.5863,-23.73859 l -2.74047,12.96017 z" style="fill:#000000;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+        <path style="fill:#ffffff;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 1096.8581,251.18882 c -3.4726,1.20413 -15.3749,4.52638 -20.597,10.45527 -6.1361,6.96666 -9.8296,18.07585 -9.7601,20.25902 0.069,2.17181 1.7208,-0.77517 6.3997,-3.45806 4.4344,-2.54269 9.8769,-5.40522 13.2968,-11.34915 1.2642,-3.5315 10.916,-14.09967 10.6606,-15.90708 z" id="path2838" ns1:nodetypes="cssscc" />
+        <path style="fill:#f9f9f9;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 904.42858,645.57646 c -9.3665,-4.39316 -20.05972,7.02768 -32.6528,14.27035 -16.24466,9.3428 -28.86467,21.83716 -18.41863,37.51536 0.0739,0.11086 16.48636,-7.8553 19.28572,-8.57143 25.74483,-6.58604 52.98876,5.0701 40.11783,-34.87501 -1.40269,-4.35327 -2.03565,-7.59785 -8.33212,-8.33927 z" id="path2834" ns1:nodetypes="cssssc" />
+        <path style="fill:#f9f9f9;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 923.35714,640.21932 c -4.20922,5.86794 -2.09187,14.09881 -0.35714,18.92857 0.77907,2.16905 2.21057,7.0893 2.85714,9.28571 1.14232,3.88052 5.90865,10.38303 21.17497,6.17137 13.74315,-3.79145 32.40628,-13.90449 40.34481,-13.93685 4.38087,-0.0179 -6.38052,-13.94128 -17.23406,-17.9488 -7.48726,-2.76457 -17.58545,-1.91901 -25.35715,-3.21429 -6.87062,-1.1451 -16.1363,-0.0974 -21.42857,0.71429 z" id="path2836" ns1:nodetypes="cssssssc" />
+        <path style="fill:#000000;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 1089.5559,388.24282 0.5419,9.55814 4.8105,6.88264 c 7.8519,12.13811 12.0193,15.82459 21.829,16.4846 8.4707,0.56993 14.8619,-4.09479 16.4235,-10.58611 1.4497,-6.02619 2.2819,-9.76742 1.7814,-17.62254 -0.2368,-3.71644 -0.3212,-8.04065 -1.0703,-13.00375 -0.8841,-5.86033 -7.0462,-19.53832 -8.9377,-26.99444 -1.878,-7.40306 -4.0166,-15.82571 -4.2322,-15.32644 -0.5498,1.27347 -6.6534,12.96954 -8.2773,15.52862 -8.1555,12.85247 -13.8925,24.50114 -22.8688,35.07928 z" id="path2842" ns1:nodetypes="cccsssssssc" />
+        </g>
+      </g></g></svg>
+  <div class="eyebrow">System Documentation</div>
+  <h1>Orca</h1>
+  <div class="sub">A sequential task-execution agent for Google Tasks,<br>built on Claude Code Routines and Google Cloud.</div>
+  <div class="meta">
+    <strong>Pepper Plant Ventures</strong><br>
+    Version 1.1 &middot; 21 September 2026<br>
+    Project <span class="mono">YOUR_PROJECT_ID</span> &middot; Region <span class="mono">us-east4</span>
+  </div>
+</div>
+
+<h2>1. Overview</h2>
+
+<p class="lede">Orca turns a Google Tasks list into a work queue for an AI agent. You write a task; Orca picks it up, hands it to Claude, and hands the result back to you for review.</p>
+
+<p>The system runs on a fixed schedule. Every thirty minutes it looks at a single Google Tasks list, takes the topmost task that is ready to run, gathers any supporting material that task needs, and dispatches it to a Claude Code Routine. Claude does the work using whatever tools that routine has been given, and reports back through a push notification. The task stays open until a human reviews the output and ticks it off.</p>
+
+<p>Three properties shape every design decision in the system:</p>
+
+<ul>
+  <li><strong>Sequential.</strong> One task runs at a time. The queue will not advance while work is in flight, and it will not advance until a person has looked at the result.</li>
+  <li><strong>Human-gated.</strong> Nothing an agent produces goes live on its own. In the reference implementation, campaigns are created as drafts and a person publishes them.</li>
+  <li><strong>Least-privilege.</strong> No downloadable credentials exist anywhere in the system. Each identity can reach only what its job requires, enforced by the platform rather than by instructions in a prompt.</li>
+</ul>
+
+<h3>Extending beyond the reference implementation</h3>
+
+<p>The first routine built on Orca produces Klaviyo email campaigns, but nothing in the orchestration layer knows anything about email marketing. The orchestrator reads a task, resolves a routine by name, and fires it. What that routine does is entirely defined by its own prompt and its own connectors.</p>
+
+<p>Adding a new class of work means creating a new routine and referencing it by name in a task. The orchestrator requires no code change:</p>
+
+<pre><code>Routine: Shopify Product Audit
+Prompt:
+Review all products tagged "seasonal" and report any with
+inventory below 5 units or missing product photography.</code></pre>
+
+<p>Plausible extensions include Shopify catalogue maintenance, Figma design handoffs, code changes against a connected repository, and content drafting. Each is a routine definition and a task, not a new system.</p>
+
+<div class="note">
+  <span class="label">Design consequence</span>
+  <p>Because routines are addressed by name from free text in a task's notes, the set of routines is effectively a permission surface. A task can only invoke a routine that has been explicitly registered with the orchestrator, and each routine's reach is bounded by the connectors it was given.</p>
+</div>
+
+<h2 class="break">2. Architecture</h2>
+
+<p>Orca spans four platforms. Each owns one concern, and the boundaries between them are also the security boundaries.</p>
+
+<table class="fixed">
+  <tr><th class="w30">Platform</th><th>Role in the system</th></tr>
+  <tr><td><strong>Google Tasks</strong></td><td>The queue and the user interface. Tasks are written and reviewed here; no separate admin surface exists.</td></tr>
+  <tr><td><strong>Google Drive</strong></td><td>Supporting material — brand guidelines, design tokens — read at run time so content can change without redeployment.</td></tr>
+  <tr><td><strong>Google Cloud Platform</strong></td><td>The orchestrator: a scheduled container that reads the queue, resolves assets, and dispatches work.</td></tr>
+  <tr><td><strong>Claude Code Routines</strong></td><td>Execution. A cloud sandbox running Claude with a fixed prompt and a defined set of connectors.</td></tr>
+</table>
+
+<h3>The dispatch cycle</h3>
+
+<pre class="flow">     ┌──────────────────┐
+     │  Cloud Scheduler │   every 30 min, OAuth
+     └────────┬─────────┘
+              ▼
+     ┌──────────────────────────────────────────┐
+     │  Cloud Run Job — one tick                │
+     │                                          │
+     │   1  reap tasks at "running" past 24h    │
+     │   2  if any task still running → stop    │
+     │   3  take top "queued" task by position  │
+     │   4  fetch brand assets  ────────────────┼──▶ Google Drive
+     │   5  patch Status: running + Started ────┼──▶ Google Tasks
+     │   6  POST /fire, write session URL back  │
+     └────────┬─────────────────────────────────┘
+              ▼
+     ┌──────────────────────────────────────────┐
+     │  Claude Code Routine (cloud sandbox)     │
+     │                                          │
+     │   verifies it is the right account       │
+     │   builds the work as a DRAFT             │
+     │   Klaviyo + Shopify connectors           │
+     └────────┬─────────────────────────────────┘
+              ▼
+        push notification to your phone
+              ▼
+        you review the draft
+              ▼
+        tick the task off  ──▶  queue advances</pre>
+
+<p>Step 1 is <strong>reaping</strong>: any task that has sat at <code>running</code> longer than the timeout is marked <code>stalled</code>, on the assumption that the run died or was never reviewed. Without it, one dead task would block the queue forever. Section 3.3 covers the details.</p>
+
+<h3>Two decisions worth understanding</h3>
+
+<h4>Status is patched before the routine fires</h4>
+<p>The routine's fire endpoint has no idempotency key: every request creates a new session. If the orchestrator fired first and then recorded that it had done so, a crash in between would leave a task that looks unstarted — and the next tick would fire it again, producing two real campaigns from one task. Patching first means a crash strands the task instead. A stranded task is recoverable; a duplicate campaign sent to customers is not.</p>
+
+<h4>Retries are disabled at both layers</h4>
+<p>Cloud Run jobs retry failed tasks by default, and Cloud Scheduler can retry the invocation that starts them. Both are set to zero for the same reason: a retry re-runs a tick that may already have fired. The next scheduled tick is only thirty minutes away, so nothing is lost by waiting.</p>
+
+<h2 class="break">3. Implementation detail</h2>
+
+<h3>3.1 Google Tasks — the queue format</h3>
+
+<p>Orca reads one task list, by title, defaulting to <code>Agent Tasks</code>. A task's <strong>title</strong> is a human label, ignored by the system. All machine-readable state lives in the <strong>notes</strong> field:</p>
+
+<pre><code>Routine: Klaviyo Campaign
+Status: queued
+Started: 2026-09-01T12:30:00+00:00
+Session: https://claude.ai/code/session_01GDw...
+Prompt:
+Create a Klaviyo email campaign based on the concept of a
+"Benito's Bundle" — a pre-defined set of three sauces...</code></pre>
+
+<p>Parsing splits on the <strong>first</strong> occurrence of <code>Prompt:</code>. Everything before it is read as <code>Key: value</code> header lines in any order; everything after is the prompt body, verbatim. This matters: an earlier fixed-order regex broke when a prompt body happened to contain the word <code>Status:</code>.</p>
+
+<table class="fixed">
+  <tr><th class="w22">Field</th><th class="w18">Written by</th><th>Meaning</th></tr>
+  <tr><td><code>Routine</code></td><td>You</td><td>Exact routine name. Resolved to a trigger ID and token by the orchestrator.</td></tr>
+  <tr><td><code>Prompt</code></td><td>You</td><td>The assignment. Free-form, multi-line.</td></tr>
+  <tr><td><code>Status</code></td><td>Orchestrator</td><td>Optional. Absent or empty means <code>queued</code>.</td></tr>
+  <tr><td><code>Started</code></td><td>Orchestrator</td><td>UTC timestamp of dispatch. Used by the reaper.</td></tr>
+  <tr><td><code>Session</code></td><td>Orchestrator</td><td>Link to the Claude session, for reading the transcript.</td></tr>
+</table>
+
+<h4>Status vocabulary</h4>
+<table class="fixed">
+  <tr><th class="w22">Value</th><th>Meaning</th></tr>
+  <tr><td><code>queued</code></td><td>Ready to run. The default when no <code>Status</code> line is present.</td></tr>
+  <tr><td><code>running</code></td><td>Dispatched. Blocks the queue until closed.</td></tr>
+  <tr><td><code>stalled</code></td><td>Written by the reaper when a task sat at <code>running</code> past the timeout — nobody reported anything.</td></tr>
+  <tr><td><code>draft</code></td><td>Written by you to park a half-written task. Any value other than <code>queued</code> keeps a task from firing.</td></tr>
+</table>
+
+<p><code>Status</code> being optional is deliberate. A hand-written task has no status until the orchestrator stamps one, and requiring the boilerplate line invites the worst failure this system has: a task sitting ignored forever because a line was missed.</p>
+
+<p>The flip side: leaving <code>Status</code> blank does <em>not</em> hold a task back. Notes autosave as you type and the tick runs every thirty minutes, so a half-written task can fire. Write <code>Status: draft</code> <strong>first</strong>, and remove it when the task is ready. A task with no <code>Prompt:</code> line cannot be parsed and is skipped whatever its status.</p>
+
+<p><strong>Completion is the native checkbox.</strong> There is no <code>done</code> status. Ticking the task off in the Google Tasks UI sets it <code>completed</code> and <code>hidden</code>, which drops it out of the orchestrator's scan entirely and releases the queue. The review you already have to do <em>is</em> the closing action.</p>
+
+<p>Two limits worth knowing: the notes field caps at <strong>8,192 characters</strong>, so link out for anything longer; and ordering follows the Tasks API <code>position</code> string, meaning the top of your list is the next thing to run.</p>
+
+<h3 class="break">3.2 Google Drive — supporting assets</h3>
+
+<p>Brand material is read from Drive at dispatch time and injected into the prompt payload. Editing a brand document changes the next run's behaviour with no redeployment.</p>
+
+<p>The access model is the security-critical part. A dedicated service account, <code>drive-asset-reader</code>, holds <strong>no domain-wide delegation</strong>. It is a principal in its own right and sees only what has been explicitly shared with its email address, at the <code>drive.readonly</code> scope. Two independent limits apply: read-only, and one folder. Neither depends on an agent behaving correctly.</p>
+
+<div class="note">
+  <span class="label">Verify after sharing</span>
+  <p>Sharing a folder that lives inside a <em>shared drive</em> may attach the service account to the entire drive as a member rather than to the single folder. The access is still read-only, so nothing can be modified or deleted — but confirm the scope after sharing rather than assuming it.</p>
+</div>
+
+<h4>What travels, and what does not</h4>
+<p>Google Docs and Sheets are exported to text; Markdown, JSON and plain text are downloaded directly. Binary assets — logos, photography, PDFs — cannot be inlined into a text payload and are reported separately rather than silently dropped. In the reference implementation these were uploaded once to the Klaviyo image library, and the routine references them from there.</p>
+
+<p>The fetcher also de-duplicates by filename stem. Where the same content exists twice — a <code>Brand_Voice</code> Google Doc alongside a <code>Brand_Voice.md</code> — it prefers the plain file, which is one direct download and retains its structure, and falls back to the other only if that read fails. Sending both would give the agent two versions of the brand voice and no way to choose.</p>
+
+<h3>3.3 Google Cloud Platform — infrastructure</h3>
+
+<h4>Authentication: keyless domain-wide delegation</h4>
+<p>Reading another user's task list requires domain-wide delegation, which conventionally means downloading a service account JSON key. <strong>No such key exists in this system.</strong> The organisation enforces <code>constraints/iam.disableServiceAccountKeyCreation</code>, and that policy was deliberately kept rather than carved out — an exception would re-enable downloadable keys for every service account in the project permanently, and would not revoke any key already created.</p>
+
+<p>Instead, Google signs the delegation assertion on request:</p>
+<ol class="tight">
+  <li>Application Default Credentials resolve the caller — a developer locally, the attached service account in Cloud Run. Same code path either way.</li>
+  <li>That identity calls IAM Credentials <code>signJwt</code>, asking Google to sign a claim set with the service account's Google-managed private key, which is never exposed.</li>
+  <li>The signed JWT is exchanged at the OAuth token endpoint for an access token scoped to the impersonated user. The <code>sub</code> claim is what performs the delegation.</li>
+</ol>
+
+<h4>Resources</h4>
+<table class="fixed">
+  <tr><th class="w30">Resource</th><th>Purpose</th></tr>
+  <tr><td><span class="mono">agent-tasks-orchestrator</span></td><td>Service account. Delegated access to Tasks; can sign as itself and impersonate the Drive reader.</td></tr>
+  <tr><td><span class="mono">drive-asset-reader</span></td><td>Service account. No delegation; read-only, folder-scoped Drive access.</td></tr>
+  <tr><td><span class="mono">orca-orchestrator</span></td><td>Cloud Run <strong>job</strong> — one tick per execution, no web server, retries disabled.</td></tr>
+  <tr><td><span class="mono">orca-tick</span></td><td>Cloud Scheduler job. Invokes the above by OAuth, retries disabled.</td></tr>
+  <tr><td><span class="mono">routine-token-*</span></td><td>Secret Manager. One secret per routine, mounted as an environment variable at run time.</td></tr>
+</table>
+
+<p>All of the above is defined in Terraform under <code>infra/</code>, including API enablement and every IAM binding. There is no public endpoint anywhere in the deployment.</p>
+
+<h4>The reaper and the sequential gate</h4>
+<p>Every tick begins by reaping. A task at <code>running</code> for longer than <code>REAPER_TIMEOUT_SECONDS</code> — default <strong>24 hours</strong> — is marked <code>stalled</code>. A task at <code>running</code> with no usable timestamp is flagged for a human and never reaped automatically, because reaping on no evidence could kill a live run.</p>
+
+<p>The timeout covers <em>review</em> latency, not run time. A task leaves <code>running</code> when a person ticks it off, so reaping at, say, four hours would release the gate overnight and fire the next campaign before anyone had seen the last one. The cost of the longer window is that a genuinely dead run blocks the queue for a day; at a handful of tasks per week, that is the right trade.</p>
+
+<p>After reaping, if anything is still running, the tick fires nothing. Reaping before checking is what stops a dead task from blocking the queue permanently.</p>
+
+<h3 class="break">3.4 Claude Code Routines — execution</h3>
+
+<p>A routine is a named, reusable execution context: a saved prompt, a model, a set of MCP connectors, and an API trigger. The orchestrator holds each routine's trigger ID and bearer token, and dispatches by <span class="mono">POST</span> to its fire endpoint with an <code>anthropic-version</code> header.</p>
+
+<h4>Payload structure</h4>
+<pre><code>BRAND ASSETS
+--- Brand_Kit.json ---
+{ "color": { "green": { "hex": "#039700", ... } } }
+--- Brand_System.md ---
+...
+
+TASK
+Create a Klaviyo email campaign based on...</code></pre>
+
+<p>This arrives inside a <code>&lt;routine-fire-payload&gt;</code> wrapper which instructs the agent to treat the contents as <strong>data, not instructions</strong>, unless the routine's own prompt opts in. <strong>The routine prompt must contain that opt-in</strong>, or fired tasks arrive as inert context and the run does nothing. The payload caps at 65,536 characters; the reference implementation uses roughly 22,000.</p>
+
+<h4>Anatomy of a routine prompt</h4>
+<p>The saved prompt is where operating limits are expressed. The reference routine covers, in order: what the agent is; that the fire payload is its assignment; where brand assets come from and that Drive is unavailable; that imagery comes from the Klaviyo library and products from Shopify; a tripwire to halt if a connector resolves to the wrong account; a prohibition on inventing products, prices or image URLs; the instruction to build a <strong>draft</strong> and never send, schedule or publish; that a human closes the task and the agent must not attempt to; and a closing instruction to report what was created and what was assumed.</p>
+
+<div class="note">
+  <span class="label">Prompts are not a security boundary</span>
+  <p>Every instruction above is a request the model is very likely to honour, not a constraint it cannot violate. Real limits come from what the routine can reach: the connectors attached to it, and the scopes those connectors hold. When something genuinely must not happen, remove the capability rather than forbidding its use. This is why Drive was removed from the routine entirely and replaced with a pre-fetch through a read-only, folder-scoped account.</p>
+</div>
+
+<h4>Connectors</h4>
+<p>Connectors are account-level MCP integrations attached per routine — Klaviyo and Shopify in the reference implementation. They inherit the permissions of the connected account, so an agent holding a Shopify connector has whatever access that connection grants, including writes. Connector scope is therefore a deployment decision, not a prompt-writing one.</p>
+
+<p>Routines run in a cloud sandbox with a default network allowlist. Reaching any host outside it requires adding the domain under the environment's custom network access settings.</p>
+
+<h2 class="break">4. Deploying for a client</h2>
+
+<p>Deployment is scripted. <code>./deploy.sh</code> is interactive and safe to re-run; every step is idempotent and Terraform owns the state.</p>
+
+<h3>Before running the script</h3>
+<p>Have these in place first. The script checks most of them and pauses if one is missing, but it cannot create any of them:</p>
+<ul class="tight">
+  <li><strong>Tools:</strong> <code>gcloud</code>, Terraform 1.5 or later, and <code>python3</code>. Docker is not needed; Cloud Build builds the image.</li>
+  <li><strong>Two logins, one account:</strong> <code>gcloud auth login</code> and <code>gcloud auth application-default login</code>.</li>
+  <li><strong>A GCP project</strong> with billing linked and <code>roles/owner</code> (or the narrower set the script prints) for the deploying account.</li>
+  <li><strong>The routines, created in Claude first.</strong> The script prompts for each routine's <code>trig_…</code> ID and its <code>sk-ant-oat</code> token, which come from the routine's API trigger.</li>
+</ul>
+
+<h3>What the script checks before touching anything</h3>
+<p>Each check corresponds to a failure that occurred during the original build, and each one misleads if you meet it cold.</p>
+
+<table class="fixed">
+  <tr><th class="w30">Check</th><th>Why it exists</th></tr>
+  <tr><td><strong>Active account</strong></td><td>gcloud stays authenticated as whoever you last logged in as. Switching to an admin account to fix billing and forgetting to switch back produces <code>PERMISSION_DENIED</code> on a project you own — which looks exactly like an org policy problem and is not.</td></tr>
+  <tr><td><strong>Terraform credentials</strong></td><td>Terraform authenticates through Application Default Credentials, a separate login from the gcloud CLI. If those are missing or belong to another account, every other check passes and <code>terraform apply</code> then fails with <code>PERMISSION_DENIED</code>. The script compares the two and offers to redo the ADC login.</td></tr>
+  <tr><td><strong>Permissions</strong></td><td>Tests the seven permissions actually required. If any are missing it prints the roles and the exact command, then <strong>pauses and re-checks</strong> so the work can be handed to an administrator without restarting.</td></tr>
+  <tr><td><strong>Billing</strong></td><td>Secret Manager, Cloud Run and Scheduler all refuse to enable without it.</td></tr>
+  <tr><td><strong>Org policy</strong></td><td>Detects a service-account-key restriction and reports it as <em>compatible</em> — this design mints no keys.</td></tr>
+</table>
+
+<h3>Billing: the trap worth knowing in advance</h3>
+<p>Linking a billing account needs <strong>two permissions held by one identity</strong>, on two different resources:</p>
+<ul class="tight">
+  <li>On the <strong>project</strong>: <code>roles/owner</code> or <code>roles/billing.projectManager</code></li>
+  <li>On the <strong>billing account</strong>: <code>roles/billing.user</code> or <code>roles/billing.admin</code></li>
+</ul>
+<p>Billing account roles are granted on the billing account's own permissions page, not on the project's IAM page — which is why the role you need does not appear when you search for it in the wrong place. A Google Workspace super administrator holds <strong>neither</strong> of these by default; Workspace admin and GCP IAM are separate systems.</p>
+<p>If linking reports <code>Cloud billing quota exceeded</code>, the billing account has hit its project cap. Unlink a dead project, or request an increase.</p>
+
+<h3>Steps Terraform cannot perform</h3>
+<p>The deploy prints these on completion with the correct values substituted. The system will not function until all are done.</p>
+
+<ol>
+  <li><strong>Authorise domain-wide delegation.</strong> In the Workspace Admin console under Security → Access and data control → API controls → Domain-wide delegation, add the orchestrator's <strong>numeric client ID</strong> — not its email — with scope <code>https://www.googleapis.com/auth/tasks</code>. Requires a super administrator.
+    <div class="note" style="margin-top:2.5mm">
+      <span class="label">Failure signature</span>
+      <p>Until this is authorised, every step succeeds up to the final token exchange, which fails with <code>unauthorized_client</code>. Signing worked; delegation is what is missing.</p>
+    </div>
+  </li>
+  <li><strong>Share the assets folder</strong> with the Drive reader service account as Viewer, then verify the resulting scope.</li>
+  <li><strong>Create the task list</strong> under the impersonated user's account, matching the configured title.</li>
+  <li><strong>Check the routines</strong> in Claude Code. They already exist, since the script needed their trigger IDs; confirm each prompt opts in to the fire payload.</li>
+</ol>
+
+<h3>Configuration</h3>
+<p>Routines are configured as a map, so a client with three routines adds three entries. Naming is derived automatically: <code>"Klaviyo Campaign"</code> becomes the environment variable <code>ROUTINE_ID_KLAVIYO_CAMPAIGN</code> and the secret <code>routine-token-klaviyo-campaign</code>. Tokens are prompted for without echo, written under a restrictive umask, and excluded from version control. A validation rule rejects tokens that do not begin with <code>sk-ant-oat</code>, because pasting an API key instead of a routine token fails obscurely much later.</p>
+
+<h3>Adopting an existing deployment</h3>
+<p>A project built by hand before this configuration existed can be adopted with <code>infra/import.sh</code>, which imports each resource into Terraform state and is safe to re-run. A fresh client deployment should not use it.</p>
+
+<h3>Per-client checklist</h3>
+<table class="fixed">
+  <tr><th class="w30">Item</th><th>Notes</th></tr>
+  <tr><td>GCP project with billing</td><td>Verify both halves of the billing permission before starting.</td></tr>
+  <tr><td>Workspace super admin access</td><td>Required once, for domain-wide delegation.</td></tr>
+  <tr><td>Claude account with Routines</td><td>Found under <strong>More → Routines</strong> in the desktop app; labelled <em>Scheduled</em> in the web sidebar.</td></tr>
+  <tr><td>Connectors authorised</td><td>Connected at account level before attaching to a routine.</td></tr>
+  <tr><td>Assets folder</td><td>Optional. Read-only share to the Drive reader.</td></tr>
+  <tr><td>Tick interval</td><td>Thirty minutes suits review-gated work. The sequential gate means a shorter interval increases responsiveness, never concurrency.</td></tr>
+</table>
+
+<h3>Operating notes</h3>
+<ul>
+  <li><strong>A task stuck at <code>running</code></strong> after a crash: <code>python orchestrator.py --reset &lt;task_id&gt;</code>. The reaper handles it automatically after the timeout.</li>
+  <li><strong>Previewing a dispatch</strong> without firing: <code>--dry-run</code> prints the exact payload and touches nothing.</li>
+  <li><strong>Reaping on its own schedule</strong>: <code>--reap-only</code>.</li>
+  <li><strong>Reading a run</strong>: the session URL is written onto the task; the full transcript is available there.</li>
+</ul>
+
+<div class="note">
+  <span class="label">A note on scope</span>
+  <p>This system is deliberately small. It has no database, no web interface, no user accounts and no public endpoints. The queue is a Google Tasks list, the state is five lines of text in a notes field, and the audit trail is the session transcript. That is enough for review-gated work at a handful of tasks per week, and each of those omissions removes a category of failure. Scale it up only when something concrete demands it.</p>
+</div>
+
+</body>
+</html>

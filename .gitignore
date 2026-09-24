@@ -1,0 +1,28 @@
+# Service account keys / secrets -- never commit
+sa-key.json
+*-key.json
+*.pem
+.env
+.env.*
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.auto.tfvars
+crash.log
+
+# Personal notes -- not part of the project
+docs/project-summary.md
